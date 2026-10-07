@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1220">
+<title>全能视频下载器</title>
+<style>
+  :root{
+    --bg:#0f1220;
+    --card:#181c2f;
+    --card2:#1f2439;
+    --line:#2b3252;
+    --text:#e9ecf7;
+    --sub:#9aa3c7;
+    --brand:#5b8cff;
+    --brand2:#7c5cff;
+    --ok:#35d07f;
+    --warn:#ffb020;
+    --err:#ff5c6c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:radial-gradient(1200px 600px at 50% -200px,#232a4d 0%,var(--bg) 60%);
+    color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Roboto,"Microsoft YaHei",sans-serif;
+    padding:16px 14px 60px;min-height:100vh;
+  }
+  .wrap{max-width:720px;margin:0 auto}
+  header{text-align:center;padding:10px 0 18px}
+  header h1{
+    margin:0;font-size:22px;letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--brand),var(--brand2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;
+  }
+  header p{margin:6px 0 0;color:var(--sub);font-size:13px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px;margin-bottom:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);
+  }
+  .card h2{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+  label{display:block;font-size:12.5px;color:var(--sub);margin:10px 0 6px}
+  input,select,textarea,button{font-family:inherit;font-size:15px}
+  input[type=text],input[type=url],textarea,select{
+    width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);
+    border-radius:11px;padding:12px 13px;outline:none;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--brand)}
+  textarea{min-height:110px;resize:vertical;font-size:13px;line-height:1.5}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  button{
+    border:0;border-radius:12px;padding:13px 16px;color:#fff;font-weight:700;
+    background:linear-gradient(90deg,var(--brand),var(--brand2));cursor:pointer;
+    width:100%;margin-top:12px;transition:transform .08s,opacity .2s;
+  }
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.5}
+  button.ghost{background:var(--card2);border:1px solid var(--line);color:var(--text)}
+  button.small{width:auto;padding:8px 12px;font-size:13px;margin:0;border-radius:9px;font-weight:600}
+  .hint{font-size:12px;color:var(--sub);margin-top:8px}
+  .item{
+    background:var(--card2);border:1px solid var(--line);border-radius:13px;
+    padding:11px 12px;margin-bottom:10px;
+  }
+  .item .name{font-size:13.5px;font-weight:700;word-break:break-all;margin-bottom:4px}
+  .item .url{font-size:11.5px;color:var(--sub);word-break:break-all;line-height:1.45}
+  .item .acts{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+  .chk{display:flex;align-items:flex-start;gap:9px;margin:0;font-size:13.5px;color:var(--text);cursor:pointer}
+  .chk input{width:19px;height:19px;flex:0 0 auto;margin:1px 0 0;accent-color:var(--brand)}
+  .chk span{color:var(--text)}
+  .page{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin-bottom:9px}
+  .page .t{font-size:13px;font-weight:700;word-break:break-all;margin-bottom:3px}
+  .page .u{font-size:11px;color:var(--sub);word-break:break-all;line-height:1.4}
+  .src{font-size:11px;color:var(--warn);word-break:break-all;margin-top:6px}
+  .tag{
+    display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:6px;
+    background:#2a3157;color:#a9b6e8;margin-right:6px;vertical-align:middle;font-weight:700;
+  }
+  .tag.mp4{background:#123a2a;color:#5fe0a0}
+  .tag.m3u8{background:#3a2a12;color:#ffc766}
+  .tag.other{background:#2a3157;color:#a9b6e8}
+  .empty{color:var(--sub);font-size:13px;text-align:center;padding:14px 0}
+  #log{
+    background:#0b0e1a;border:1px solid var(--line);border-radius:11px;padding:10px;
+    font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    max-height:190px;overflow:auto;white-space:pre-wrap;word-break:break-all;color:#9fe0c0;
+  }
+  #log .e{color:var(--err)} #log .w{color:var(--warn)} #log .i{color:#8fb4ff}
+  .bar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin-top:10px;display:none}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--ok));transition:width .2s}
+  details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+  details summary{cursor:pointer;font-weight:700;font-size:14px;outline:none}
+  details ol{padding-left:20px;margin:10px 0 0;font-size:13px;color:var(--sub);line-height:1.75}
+  details ol b{color:var(--text)}
+  .pill{font-size:11px;color:var(--sub);text-align:center;margin-top:6px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>全能视频下载器</h1>
+    <p>输入网址 → 自动找出页面里所有视频 → 一键下载</p>
+    <p style="margin-top:4px">支持导航页/列表页：自动进入子页面把视频挖出来</p>
+  </header>
+
+  <!-- 主功能 -->
+  <div class="card">
+    <h2><span class="dot"></span>第一步：输入网址</h2>
+    <label>网页地址（必须是 http:// 或 https:// 开头）</label>
+    <input id="pageUrl" type="url" placeholder="https://example.com/video-page" autocomplete="off" autocapitalize="off">
+
+    <label>同时也可直接粘贴媒体直链（.mp4 / .m3u8）</label>
+    <input id="directUrl" type="url" placeholder="https://.../xxx.mp4 或 https://.../xxx.m3u8" autocomplete="off" autocapitalize="off">
+
+    <label>谁来替你取网页（关键设置）</label>
+    <select id="proxy">
+      <option value="" selected>① 手机直连（走我自己的代理/VPN）— 推荐</option>
+      <option value="https://api.allorigins.win/raw?url={url}">② 公共通道 allorigins（第三方服务器代取）</option>
+      <option value="https://corsproxy.io/?url={url}">③ 公共通道 corsproxy（第三方服务器代取）</option>
+      <option value="https://api.codetabs.com/v1/proxy?quest={url}">④ 公共通道 codetabs（第三方服务器代取）</option>
+      <option value="https://r.jina.ai/{url}">⑤ 公共通道 jina（文本模式）</option>
+      <option value="__custom__">⑥ 自定义通道（我有自己的代理服务）</option>
+    </select>
+    <input id="customProxy" type="text" placeholder="你自己的代理地址，{url} 代表目标网址，例如 https://你的域名/?url={url}" style="margin-top:8px;display:none" autocomplete="off" autocapitalize="off">
+
+    <label>抓取模式</label>
+    <div class="opts">
+      <label class="chk"><input type="checkbox" id="deep" checked><span>深度模式：导航页/列表页自动进入子页面找视频</span></label>
+      <label class="chk"><input type="checkbox" id="cross"><span>允许跟随到其他网站（站外链接）</span></label>
+      <label class="chk"><input type="checkbox" id="autoFallback" checked><span>直连失败时自动改用公共通道重试（关掉可避免网址被第三方服务器看到）</span></label>
+    </div>
+    <label>最多进入几个页面（越大越慢，建议 5～15）</label>
+    <input id="maxPages" type="number" value="8" min="1" max="40" inputmode="numeric">
+
+    <button id="btnScan">开始抓取视频</button>
+    <button id="btnDirect" class="ghost">直接下载我粘贴的直链</button>
+    <div class="bar" id="bar"><i></i></div>
+  </div>
+
+  <!-- 结果 -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--ok)"></span>找到的视频</h2>
+    <div id="results"><div class="empty">还没有结果，先点上面的按钮吧</div></div>
+  </div>
+
+  <!-- 子页面 -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--warn)"></span>发现的子页面（点一下单独抓取）</h2>
+    <div id="links"><div class="empty">深度模式抓完后，这里会列出导航页里的子页面</div></div>
+  </div>
+
+  <!-- 手动兜底 -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--warn)"></span>抓不到？手动兜底（很有用）</h2>
+    <label>把网页源码、或者你看到的视频地址，粘贴到这里</label>
+    <textarea id="manual" placeholder="粘贴一整段网页源码，或直接粘贴 https://....mp4 / .m3u8 地址，可多行"></textarea>
+    <button id="btnManual" class="ghost">从粘贴内容里找视频</button>
+  </div>
+
+  <!-- 日志 -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--brand2)"></span>运行日志</h2>
+    <div id="log">准备就绪。</div>
+  </div>
+
+  <!-- 说明 -->
+  <details>
+    <summary>使用说明 &amp; 常见问题（点开看）</summary>
+    <ol>
+      <li><b>怎么用：</b>把这个文件保存到手机，用浏览器打开 → 粘贴网页地址 → 点“开始抓取视频” → 在结果里点“下载”。</li>
+      <li><b>导航页 / 列表页专用（重点）：</b>如果网址是一个“目录页”，它自己不含视频，只挂着一堆链接。保持勾选<b>“深度模式”</b>，程序会自动进去子页面找视频。<b>“最多进入几个页面”</b>越大找得越全、但越慢，建议 5～15。日志里会显示它进到哪一页了。</li>
+      <li><b>抓得不理想时：</b>看中间的<b>“发现的子页面”</b>列表，点某一项的“抓这一页”，就只精准抓那一页，比全站乱爬快得多、准得多。</li>
+      <li><b>站外链接：</b>如果视频在另一个网站（比如网盘、第三方播放站），勾上“允许跟随到其他网站”。默认只跟本站，是为了避免乱爬浪费时间。</li>
+      <li><b>我有科学上网/代理，会生效吗？（重要）：</b>会，但要看“谁来替你取网页”这一项。<br>
+        · 选<b>“手机直连”</b>：请求由你手机发出，<b>自动走你的代理/VPN</b>，网址不经过任何第三方。需要代理才能打开的网站，必须选这个。<br>
+        · 选<b>公共通道</b>：请求由第三方的服务器发出，<b>你的代理完全用不上</b>——因为不是你的手机在访问。它只适合“不用代理也能打开、但网站不允许跨域”的情况。<br>
+        所以：<b>要翻墙才能上的站，一定选“手机直连”。</b></li>
+      <li><b>直连有时还是会失败，为什么：</b>如果网站没开跨域许可（CORS），浏览器会拦住“读取网页内容”这个动作——这跟能不能打开网页是两回事，你的代理帮不上。这时用这三招：①打开“深度模式”让它去子页找；②用下面的“手动兜底”，把源码或视频地址粘进来；③点结果里的<b>“直连打开”</b>——这条路径不受跨域限制，会走你的代理，长按画面即可另存。<b>下载视频文件本身不受跨域限制，只有“读取网页/合并切片”才受限制。</b></li>
+      <li><b>自定义通道：</b>如果你自己有服务器/Cloudflare Worker 做的代理，选“⑥ 自定义通道”填进去，用 {url} 代表目标网址。这是最稳的方案，但要自己搭，手机上不方便弄。</li>
+      <li><b>为什么要“网络通道”：</b>手机浏览器直接访问别人的网站会被安全策略（CORS）挡住。通道相当于替你去把网页内容取回来。公共通道通常不稳定（限流、失效、要密钥），所以默认用直连。</li>
+      <li><b>m3u8 是什么：</b>很多网站的视频被切成几百个小片段（m3u8 列表）。本工具会把这些小片段自动合并成一个文件再下载，所以会慢一些，请等进度条走完，中途别退出页面。</li>
+      <li><b>抓不到的原因：</b>①视频要登录才能看；②地址是加密动态生成的；③网站屏蔽了公共通道；④验证码。遇到这些用“手动兜底”：把网页源码或视频地址粘进来解析。</li>
+      <li><b>下载去哪了：</b>手机浏览器下载的文件一般在“文件管理 → 下载 / Download”里。iOS Safari 在“文件”App 的“下载”中。</li>
+      <li><b>合规提醒：</b>请只下载你有权保存的内容（自己的视频、明确允许下载的资源、公有领域内容）。不要用于侵犯版权或绕过付费墙。</li>
+    </ol>
+  </details>
+
+  <div class="pill">纯本地运行 · 不上传你的数据 · 单文件网页</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 工具 ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var logBox = $("log");
+  function log(msg, type){
+    var cls = type ? ' class="'+type+'"' : '';
+    var t = new Date().toTimeString().slice(0,8);
+    logBox.innerHTML += '\n<span'+cls+'>['+t+'] '+esc(msg)+'</span>';
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+  function clearLog(){ logBox.innerHTML = ""; }
+  function esc(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];
+    });
+  }
+  function viaProxy(u, proxy){
+    if(!proxy) return u;
+    if(proxy.indexOf("{url}") >= 0) return proxy.replace("{url}", encodeURIComponent(u));
+    if(proxy.indexOf("%s") >= 0) return proxy.replace("%s", encodeURIComponent(u));
+    return proxy + u;
+  }
+  /* 当前生效的通道：空字符串 = 手机直连（走本机代理/VPN） */
+  function getProxy(){
+    var v = $("proxy").value;
+    if(v === "__custom__"){
+      var c = ($("customProxy") && $("customProxy").value || "").trim();
+      if(!c || c.indexOf("http") !== 0){
+        log("自定义通道没填对，已改用手机直连。", "w");
+        return "";
+      }
+      return c;
+    }
+    return v;
+  }
+  function proxyLabel(p){
+    if(!p) return "手机直连（走你自己的代理/VPN）";
+    if(p.indexOf("allorigins") > -1 || p.indexOf("corsproxy") > -1 || p.indexOf("codetabs") > -1 || p.indexOf("jina") > -1) return "公共通道（由第三方服务器代取）";
+    return "自定义通道";
+  }
+  function withTimeout(promise, ms){
+    var ctrl = new AbortController();
+    var timer = setTimeout(function(){ ctrl.abort(); }, ms);
+    return promise(ctrl.signal).then(function(r){ clearTimeout(timer); return r; },
+      function(e){ clearTimeout(timer); throw e; });
+  }
+  function fetchText(url, ms){
+    return withTimeout(function(signal){
+      return fetch(url, {signal:signal, redirect:"follow"}).then(function(r){
+        if(!r.ok) throw new Error("HTTP "+r.status);
+        return r.text();
+      });
+    }, ms || 20000);
+  }
+  function fetchBuf(url, ms){
+    return withTimeout(function(signal){
+      return fetch(url, {signal:signal, redirect:"follow"}).then(function(r){
+        if(!r.ok) throw new Error("HTTP "+r.status);
+        return r.arrayBuffer();
+      });
+    }, ms || 45000);
+  }
+  function extOf(url){
+    var clean = url.split("#")[0].split("?")[0].toLowerCase();
+    var m = clean.match(/\.([a-z0-9]{2,5})$/);
+    return m ? m[1] : "";
+  }
+  function kindOf(url){
+    var e = extOf(url);
+    if(e === "m3u8") return "m3u8";
+    if(["mp4","m4v","webm","mov","mkv","flv","avi","ts","mpd"].indexOf(e) >= 0) return e === "mp4" ? "mp4" : "other";
+    return "other";
+  }
+  function prettyName(url, i){
+    var base = "";
+    try{ base = decodeURIComponent(url.split("?")[0].split("/").pop() || ""); }catch(err){ base = ""; }
+    if(!base || base.length > 60) base = "video_" + (i+1) + (extOf(url) ? "."+extOf(url) : "");
+    return base;
+  }
+  function abs(href, baseUrl){
+    href = href.trim().replace(/^['"]|['"]$/g, "");
+    href = href.replace(/\\u002F/gi, "/").replace(/\\\//g, "/").replace(/&amp;/g, "&");
+    if(/^https?:\/\//i.test(href)) return href;
+    if(href.indexOf("//") === 0) return "https:" + href;
+    try{ return new URL(href, baseUrl).href; }catch(e){ return href; }
+  }
+  function setBar(pct){
+    var bar = $("bar");
+    if(pct == null){ bar.style.display = "none"; bar.firstElementChild.style.width = "0"; return; }
+    bar.style.display = "block";
+    bar.firstElementChild.style.width = Math.max(0, Math.min(100, pct)) + "%";
+  }
+
+  /* ---------- 解析网页里的视频 ---------- */
+  var MEDIA_RE = /https?:\/\/[^\s"'<>`\\\)\]\}]+?\.(?:m3u8|mp4|m4v|webm|mov|mkv|flv|avi|mpd|ts)(?:\?[^\s"'<>`\\\)\]\}]*)?/gi;
+
+  function extract(html, baseUrl){
+    var found = [];
+    function push(u){
+      if(!u) return;
+      u = abs(u, baseUrl);
+      if(!/^https?:\/\//i.test(u)) return;
+      if(u.indexOf("data:") === 0) return;
+      if(found.indexOf(u) < 0) found.push(u);
+    }
+
+    // 1) 标签属性
+    var attrRe = /<(?:video|source|embed|object)[^>]*?(?:src|data-src|data-video|data-url)\s*=\s*["']([^"']+)["']/gi, m;
+    while((m = attrRe.exec(html))) push(m[1]);
+
+    // 2) og / twitter 元信息
+    var metaRe = /<meta[^>]+(?:property|name)\s*=\s*["'](?:og:video(?::url|:secure_url)?|twitter:player:stream)["'][^>]*?content\s*=\s*["']([^"']+)["']/gi;
+    while((m = metaRe.exec(html))) push(m[1]);
+    var metaRe2 = /<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]*?(?:property|name)\s*=\s*["'](?:og:video(?::url|:secure_url)?|twitter:player:stream)["']/gi;
+    while((m = metaRe2.exec(html))) push(m[1]);
+
+    // 3) iframe 里的玩家页（先收着，后面可选深挖）
+    var iframes = [];
+    var ifRe = /<iframe[^>]*?src\s*=\s*["']([^"']+)["']/gi;
+    while((m = ifRe.exec(html))) iframes.push(abs(m[1], baseUrl));
+
+    // 4) 全文正则兜底（能捞到脚本里藏的地址）
+    html = html.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
+    while((m = MEDIA_RE.exec(html))) push(m[0]);
+
+    return {urls: found, iframes: iframes};
+  }
+
+  /* ---------- 解析页面里的链接（导航页关键） ---------- */
+  var SKIP_EXT = /\.(jpe?g|png|gif|svg|webp|bmp|ico|css|js|json|xml|woff2?|ttf|eot|otf|pdf|zip|rar|7z|gz|exe|apk|dmg|mp3|wav|srt|vtt)(\?|$)/i;
+  var HIT_WORDS = ["video","play","watch","vod","movie","detail","/v/","view","show","ep","episode","playlist","album","list","post","article","/p/","/d/","id=","tv","film","media","mv","av","tvshow","drama","anime","series",
+    "视频","播放","观看","详情","剧集","电影","电视剧","动漫","综艺","第","集","列表","专辑","资源","下载","在线"];
+
+  function extractLinks(html, baseUrl){
+    var out = [], seen = {}, m;
+    var re = /<a\b[^>]*?href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]{0,300}?)<\/a>/gi;
+    while((m = re.exec(html))){
+      var u = abs(m[1], baseUrl);
+      if(!/^https?:\/\//i.test(u)) continue;
+      var clean = u.split("#")[0];
+      if(!clean || seen[clean]) continue;
+      if(SKIP_EXT.test(clean)) continue;
+      if(/\.(mp4|m3u8|webm|m4v|mov|mkv|flv|ts|mpd)$/i.test(clean.split("?")[0])) continue;
+      seen[clean] = 1;
+      var text = m[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+      out.push({url: clean, text: text, score: linkScore(clean, text)});
+    }
+    return out;
+  }
+
+  function linkScore(u, text){
+    var s = (u + " " + (text || "")).toLowerCase(), score = 0;
+    HIT_WORDS.forEach(function(k){ if(s.indexOf(k) >= 0) score += 10; });
+    if(text && text.length > 2) score += 3;               // 有可读文字，更像内容页
+    if(/\.(html?|php|aspx?|jsp)$/i.test(u)) score += 2;
+    var seg = u.split("?")[0].split("/").length;
+    if(seg > 6) score -= 4;                               // 层级太深的多半是杂项
+    if(u.length > 160) score -= 4;
+    return score;
+  }
+
+  function sameOrigin(a, b){
+    try{ return new URL(a).origin === new URL(b).origin; }catch(e){ return false; }
+  }
+
+  /* ---------- 取网页（自动换通道） ---------- */
+  var ALT_PROXIES = [
+    "https://api.allorigins.win/raw?url={url}",
+    "https://corsproxy.io/?url={url}",
+    "https://api.codetabs.com/v1/proxy?quest={url}"
+  ];
+
+  function grabPage(url){
+    var proxy = getProxy();
+    var tried = {};
+    function attempt(p){
+      var key = p || "__direct__";
+      if(tried[key]) return Promise.reject(new Error("已尝试过该通道"));
+      tried[key] = 1;
+      return fetchText(viaProxy(url, p), 25000);
+    }
+    return attempt(proxy).catch(function(e){
+      if(!$("autoFallback").checked){
+        log("直连失败：" + e.message + "（已关闭自动换通道）", "e");
+        throw e;
+      }
+      log("直连失败：" + e.message + "，改用公共通道重试（该网址会经过第三方服务器）…", "w");
+      var chain = Promise.reject();
+      ALT_PROXIES.filter(function(x){ return x !== proxy; }).forEach(function(p){
+        chain = chain.catch(function(){ return attempt(p); });
+      });
+      return chain;
+    });
+  }
+
+  function render(items, note){
+    var box = $("results");
+    if(!items.length){
+      box.innerHTML = '<div class="empty">没有找到可直接下载的视频地址。<br>试试换通道、或用下面的“手动兜底”。</div>';
+      return;
+    }
+    var html = "";
+    if(note) html += '<div class="hint" style="margin:0 0 10px">'+esc(note)+'</div>';
+    items.forEach(function(it, i){
+      var u = it.url;
+      var kind = kindOf(u);
+      var tagCls = kind === "m3u8" ? "m3u8" : (kind === "mp4" ? "mp4" : "other");
+      var label = kind === "m3u8" ? "M3U8 切片" : (kind === "mp4" ? "MP4" : (extOf(u) || "媒体").toUpperCase());
+      html += '<div class="item">'
+        + '<div class="name"><span class="tag '+tagCls+'">'+esc(label)+'</span>'+esc(it.title || prettyName(u, i))+'</div>'
+        + '<div class="url">'+esc(u)+'</div>'
+        + (it.from ? '<div class="src">来源页面：'+esc(it.from)+'</div>' : '')
+        + '<div class="acts">'
+        +   '<button class="small" data-dl="'+i+'">下载</button>'
+        +   '<button class="small ghost" data-open="'+i+'">直连打开</button>'
+        +   '<button class="small ghost" data-copy="'+i+'">复制链接</button>'
+        +   '<button class="small ghost" data-play="'+i+'">试播</button>'
+        + '</div></div>';
+    });
+    box.innerHTML = html;
+    box.querySelectorAll("[data-dl]").forEach(function(b){
+      b.onclick = function(){ downloadItem(items[+b.dataset.dl].url, b); };
+    });
+    box.querySelectorAll("[data-open]").forEach(function(b){
+      b.onclick = function(){
+        var u = items[+b.dataset.open].url;
+        log("用浏览器直接打开（走你手机的代理/VPN，不经第三方）：" + u, "i");
+        directOpen(u);
+      };
+    });
+    box.querySelectorAll("[data-copy]").forEach(function(b){
+      b.onclick = function(){
+        copyText(items[+b.dataset.copy].url);
+        b.textContent = "已复制✓";
+        setTimeout(function(){ b.textContent = "复制链接"; }, 1500);
+      };
+    });
+    box.querySelectorAll("[data-play]").forEach(function(b){
+      b.onclick = function(){
+        var u = items[+b.dataset.play].url;
+        var v = document.createElement("video");
+        v.controls = true; v.playsInline = true; v.src = u;
+        v.style.cssText = "width:100%;border-radius:10px;margin-top:10px;background:#000";
+        var item = b.closest(".item");
+        var old = item.querySelector("video");
+        if(old) old.remove(); else item.appendChild(v);
+      };
+    });
+  }
+
+  /* ---------- 渲染发现的子页面 ---------- */
+  function renderLinks(links){
+    var box = $("links");
+    if(!links.length){
+      box.innerHTML = '<div class="empty">这次没有发现可继续进入的子页面。</div>';
+      return;
+    }
+    var html = '<div class="hint" style="margin:0 0 10px">共 '+links.length+' 个。点“抓这一页”只解析该页面，速度最快。</div>';
+    links.slice(0, 40).forEach(function(l, i){
+      html += '<div class="page">'
+        + '<div class="t">'+esc(l.text || prettyName(l.url, i))+'</div>'
+        + '<div class="u">'+esc(l.url)+'</div>'
+        + '<div class="acts" style="margin-top:8px"><button class="small" data-go="'+i+'">抓这一页</button>'
+        + '<button class="small ghost" data-pcopy="'+i+'">复制链接</button></div></div>';
+    });
+    box.innerHTML = html;
+    box.querySelectorAll("[data-go]").forEach(function(b){
+      b.onclick = function(){
+        var url = links[+b.dataset.go].url;
+        $("pageUrl").value = url;
+        var d = $("deep"); if(d) d.checked = false;   // 单页抓取，不再往下爬
+        clearLog(); log("单独抓取子页面：" + url, "i"); scan(url);
+        $("results").scrollIntoView({behavior:"smooth", block:"start"});
+      };
+    });
+    box.querySelectorAll("[data-pcopy]").forEach(function(b){
+      b.onclick = function(){
+        copyText(links[+b.dataset.pcopy].url);
+        b.textContent = "已复制✓";
+        setTimeout(function(){ b.textContent = "复制链接"; }, 1500);
+      };
+    });
+  }
+
+  function copyText(t){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).catch(function(){ fallbackCopy(t); });
+    } else fallbackCopy(t);
+  }
+  function fallbackCopy(t){
+    var ta = document.createElement("textarea");
+    ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- 下载（单文件） ---------- */
+  function saveBlob(blob, filename){
+    var a = document.createElement("a");
+    var url = URL.createObjectURL(blob);
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+  }
+
+  /* 交给浏览器自己打开/下载：这条路径走手机系统代理（VPN），不受跨域限制，
+     支持大文件流式下载；缺点是文件名和保存位置由浏览器决定。 */
+  function directOpen(url){
+    var a = document.createElement("a");
+    a.href = url;
+    try{ a.download = prettyName(url, 0); }catch(e){}
+    a.rel = "noopener";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ a.remove(); }, 2000);
+    log("已交给浏览器。若它直接播放而不是下载：长按视频画面 → 选“下载”，或长按链接 → “链接另存为”。", "i");
+  }
+
+  /* 取媒体数据：先直连（走你的代理），失败再按需切公共通道 */
+  function fetchBufSmart(url, ms){
+    var proxy = getProxy();
+    var tried = {};
+    function attempt(p){
+      var key = p || "__direct__";
+      if(tried[key]) return Promise.reject(new Error("已尝试过该通道"));
+      tried[key] = 1;
+      return fetchBuf(viaProxy(url, p), ms);
+    }
+    return attempt(proxy).catch(function(e){
+      if(!$("autoFallback").checked) throw e;
+      log("直连下载失败：" + e.message + "，改用公共通道重试（网址会经过第三方服务器）…", "w");
+      var chain = Promise.reject();
+      ALT_PROXIES.filter(function(x){ return x !== proxy; }).forEach(function(p){
+        chain = chain.catch(function(){ return attempt(p); });
+      });
+      return chain;
+    });
+  }
+
+  function downloadItem(url, btn){
+    var kind = kindOf(url);
+    if(kind === "m3u8"){ mergeM3U8(url, btn); return; }
+    var name = prettyName(url, 0);
+    var old = btn ? btn.textContent : "";
+    if(btn){ btn.disabled = true; btn.textContent = "下载中…"; }
+    log("开始下载：" + url, "i");
+    setBar(5);
+    fetchBufSmart(url, 90000).then(function(buf){
+      setBar(90);
+      saveBlob(new Blob([buf]), name);
+      setBar(100); setTimeout(function(){ setBar(null); }, 800);
+      log("✅ 已保存：" + name + "（" + (buf.byteLength/1048576).toFixed(2) + " MB）");
+      if(btn){ btn.textContent = "完成✓"; setTimeout(function(){ btn.disabled = false; btn.textContent = old; }, 2000); }
+    }).catch(function(e){
+      setBar(null);
+      log("❌ 下载失败：" + e.message, "e");
+      log("改用「直连打开」按钮：它让浏览器自己走你的代理去取，不受跨域限制（长按画面可另存）。", "w");
+      if(btn){ btn.disabled = false; btn.textContent = old; }
+    });
+  }
+
+  /* ---------- M3U8 合并下载 ---------- */
+  function parseM3U8(text, playlistUrl){
+    var lines = text.split(/\r?\n/), out = {variants:[], segments:[], key:null, map:null, fmp4:false};
+    for(var i=0;i<lines.length;i++){
+      var line = lines[i].trim();
+      if(!line) continue;
+      if(/^#EXT-X-STREAM-INF/i.test(line)){
+        var bw = /BANDWIDTH=(\d+)/i.exec(line);
+        var next = (lines[i+1]||"").trim();
+        if(next && next[0] !== "#"){
+          out.variants.push({bandwidth: bw ? +bw[1] : 0, url: abs(next, playlistUrl)});
+        }
+      } else if(/^#EXT-X-KEY/i.test(line)){
+        if(/METHOD=NONE/i.test(line)) out.key = null;
+        else{
+          var mu = /URI="([^"]+)"/i.exec(line);
+          out.key = { uri: mu ? abs(mu[1], playlistUrl) : null, raw: line };
+        }
+      } else if(/^#EXT-X-MAP/i.test(line)){
+        var mu2 = /URI="([^"]+)"/i.exec(line);
+        if(mu2){ out.map = abs(mu2[1], playlistUrl); out.fmp4 = true; }
+      } else if(line[0] !== "#"){
+        out.segments.push(abs(line, playlistUrl));
+      }
+    }
+    if(!out.fmp4 && out.segments.length && /\.m4s|\.mp4/i.test(out.segments[0] || "")) out.fmp4 = true;
+    return out;
+  }
+
+  function mergeM3U8(url, btn){
+    var old = btn ? btn.textContent : "";
+    if(btn){ btn.disabled = true; btn.textContent = "解析中…"; }
+    log("读取 m3u8 列表：" + url, "i");
+    log("取列表方式：" + proxyLabel(getProxy()), "i");
+    setBar(2);
+
+    grabPage(url).then(function(text){
+      if(text.indexOf("#EXTM3U") < 0) throw new Error("返回内容不是 m3u8（可能被通道拦截）");
+      var pl = parseM3U8(text, url);
+
+      // 主列表：选码率最高的一个
+      if(pl.variants.length && !pl.segments.length){
+        pl.variants.sort(function(a,b){ return b.bandwidth - a.bandwidth; });
+        log("这是主列表，选用最高清：BANDWIDTH=" + pl.variants[0].bandwidth, "i");
+        return grabPage(pl.variants[0].url).then(function(t2){
+          return parseM3U8(t2, pl.variants[0].url);
+        });
+      }
+      return pl;
+    }).then(function(pl){
+      if(!pl.segments.length) throw new Error("列表里没有找到视频分片");
+      if(pl.key){
+        log("⚠️ 该视频有加密（AES-128）。本工具暂不支持解密，可能无法正常播放。仍可尝试合并。", "w");
+      }
+      var total = pl.segments.length + (pl.map ? 1 : 0);
+      log("共 " + pl.segments.length + " 个分片，开始合并…（请勿退出页面）", "i");
+
+      var parts = [];
+      var done = 0;
+      var fail = 0;
+      // 分片通道：先用手机直连（走你的代理），全部失败再切换到公共通道
+      var segChannel = getProxy();
+      var switched = false;
+
+      function fetchSeg(u){
+        return fetchBuf(viaProxy(u, segChannel), 60000).catch(function(e){
+          if(segChannel || !$("autoFallback").checked || switched) throw e;
+          switched = true;
+          segChannel = ALT_PROXIES[0];
+          log("直连取分片失败，已切换到公共通道重试（网址会经过第三方服务器）…", "w");
+          return fetchBuf(viaProxy(u, segChannel), 60000);
+        });
+      }
+
+      function step(idx){
+        if(idx >= pl.segments.length){
+          var type = pl.fmp4 ? "video/mp4" : "video/mp2t";
+          var name = prettyName(url, 0).replace(/\.m3u8$/i, "") + (pl.fmp4 ? ".mp4" : ".ts");
+          var blob = new Blob(parts, {type:type});
+          var mb = blob.size / 1048576;
+          log("✅ 合并完成：" + name + "（" + mb.toFixed(1) + " MB）" + (fail ? "，有 "+fail+" 个分片失败" : ""), fail ? "w" : "");
+          setBar(100);
+          saveBlob(blob, name);
+          setTimeout(function(){ setBar(null); }, 1000);
+          if(mb > 300) log("提示：文件较大，部分手机若保存失败，可改用“直连打开”或“复制链接”。", "w");
+          if(btn){ btn.disabled = false; btn.textContent = old; }
+          return;
+        }
+        var segUrl = pl.segments[idx];
+        fetchSeg(segUrl).then(function(buf){
+          parts.push(buf);
+        }).catch(function(e){
+          fail++;
+          log("分片 " + (idx+1) + " 失败：" + e.message, "e");
+        }).then(function(){
+          done++;
+          setBar(4 + (done/total)*92);
+          if(done % 10 === 0 || done === pl.segments.length){
+            log("进度 " + done + "/" + pl.segments.length + " …");
+          }
+          step(idx + 1);
+        });
+      }
+      step(0);
+    }).catch(function(e){
+      setBar(null);
+      log("❌ m3u8 处理失败：" + e.message, "e");
+      log("建议：换公共通道再试；或点“复制链接”，把 .m3u8 链接交给支持 m3u8 的下载器。", "w");
+      if(btn){ btn.disabled = false; btn.textContent = old; }
+    });
+  }
+
+  /* ---------- 单页解析（含内嵌播放器） ---------- */
+  function parsePage(html, url){
+    var res = extract(html, url);
+    var links = extractLinks(html, url);
+    if(res.urls.length || !res.iframes.length){
+      return Promise.resolve({videos: res.urls, links: links, fromIframe: false});
+    }
+    log("页面本身没有视频，检测到 " + res.iframes.length + " 个内嵌播放器，进入其中查找…", "i");
+    var chain = Promise.resolve([]);
+    res.iframes.slice(0, 3).forEach(function(fr){
+      chain = chain.then(function(acc){
+        return grabPage(fr).then(function(h2){
+          return acc.concat(extract(h2, fr).urls);
+        }).catch(function(){ return acc; });
+      });
+    });
+    return chain.then(function(extra){
+      var all = res.urls.concat(extra);
+      var uniq = all.filter(function(v, i){ return all.indexOf(v) === i; });
+      return {videos: uniq, links: links, fromIframe: true};
+    });
+  }
+
+  function pickLinks(links, baseUrl, allowCross){
+    var origin = "";
+    try{ origin = new URL(baseUrl).origin; }catch(e){}
+    return links
+      .filter(function(l){ return allowCross || sameOrigin(l.url, origin); })
+      .sort(function(a, b){ return b.score - a.score; });
+  }
+
+  /* ---------- 抓取主流程 ---------- */
+  function scan(url){
+    var deepOn = $("deep").checked;
+    var maxPages = Math.max(1, Math.min(40, parseInt($("maxPages").value, 10) || 8));
+    var allowCross = $("cross").checked;
+    log("开始抓取：" + url, "i");
+    log("抓取方式：" + proxyLabel(getProxy()), "i");
+    log("下载/播放会优先走手机直连，即你自己的代理/VPN。", "i");
+    if(deepOn){
+      log("深度模式：最多进入 " + maxPages + " 个页面" + (allowCross ? "（含站外）" : "（仅本站）"), "i");
+      crawl(url, maxPages, allowCross);
+    } else {
+      scanSingle(url, allowCross);
+    }
+  }
+
+  /* 单页抓取 */
+  function scanSingle(url, allowCross){
+    setBar(8);
+    grabPage(url).then(function(html){
+      log("网页已取回，长度 " + html.length + " 字符，开始解析…");
+      setBar(60);
+      return parsePage(html, url);
+    }).then(function(r){
+      setBar(100); setTimeout(function(){ setBar(null); }, 800);
+      var items = r.videos.map(function(v){ return {url: v, from: url}; });
+      if(items.length){
+        log("✅ 找到 " + items.length + " 个视频地址" + (r.fromIframe ? "（含内嵌播放器）" : ""));
+      } else {
+        log("❌ 本页没有视频地址。若这是导航页，请勾选“深度模式”再抓一次。", "w");
+      }
+      render(items, "");
+      renderLinks(pickLinks(r.links, url, allowCross));
+    }).catch(function(e){
+      setBar(null);
+      log("❌ 抓取失败：" + e.message, "e");
+      log("解决办法：换通道重试；或长按网页 → 查看源码 → 全选复制 → 粘到“手动兜底”。", "w");
+      render([], "");
+    });
+  }
+
+  /* 深度抓取：导航页 → 子页面 */
+  function crawl(startUrl, maxPages, allowCross){
+    var queue = [{url: startUrl, text: "起始页", score: 9999}];
+    var visited = {};
+    var videos = [];
+    var allLinks = [];
+    var pages = 0;
+    var startOrigin = "";
+    try{ startOrigin = new URL(startUrl).origin; }catch(e){}
+
+    function addLinks(links){
+      var added = 0;
+      links.forEach(function(l){
+        if(visited[l.url]) return;
+        if(!allowCross && !sameOrigin(l.url, startOrigin)) return;
+        if(queue.some(function(q){ return q.url === l.url; })) return;
+        if(queue.length >= 150) return;
+        queue.push(l);
+        added++;
+      });
+      return added;
+    }
+
+    function finish(){
+      setBar(null);
+      var note = "深度模式：已浏览 " + pages + " 个页面";
+      if(videos.length) log("✅ 抓取结束，共找到 " + videos.length + " 个视频（浏览 " + pages + " 个页面）");
+      else log("❌ 没有找到视频地址。可开“允许跟随站外链接”再试，或用下面的“手动兜底”。", "w");
+      if(allLinks.length) log("另外发现 " + allLinks.length + " 个子页面，列在下方，可单独点开抓取。", "i");
+      render(videos, videos.length ? note : "");
+      renderLinks(allLinks);
+    }
+
+    function step(){
+      if(!queue.length || pages >= maxPages) return finish();
+      queue.sort(function(a, b){ return b.score - a.score; });
+      var cur = queue.shift();
+      if(visited[cur.url]) return step();
+      visited[cur.url] = 1;
+      pages++;
+      log("[" + pages + "/" + maxPages + "] 进入：" + cur.url, "i");
+      setBar((pages / maxPages) * 90);
+
+      grabPage(cur.url).then(function(html){
+        var res = extract(html, cur.url);
+        var before = videos.length;
+        res.urls.forEach(function(u){
+          if(!videos.some(function(v){ return v.url === u; })) videos.push({url: u, from: cur.url});
+        });
+        var links = extractLinks(html, cur.url);
+        var cross = links.filter(function(l){ return !sameOrigin(l.url, startOrigin); }).length;
+
+        // 收进“子页面”面板（去重）
+        links.forEach(function(l){
+          if(!allLinks.some(function(x){ return x.url === l.url; })) allLinks.push(l);
+        });
+        allLinks.sort(function(a, b){ return b.score - a.score; });
+
+        var got = videos.length - before;
+        if(got) log("  → 本页找到 " + got + " 个视频 ✓（累计 " + videos.length + " 个）");
+        else log("  → 本页没有视频，是列表页，继续往下找（本页有 " + links.length + " 个链接）");
+
+        // 本页没有视频（列表页），或这是起始页，就继续深入
+        if(!got || pages === 1){
+          var n = addLinks(links.slice(0, 30));
+          if(n) log("     已加入 " + n + " 个子页面待抓取");
+        }
+        if(cross && !allowCross){
+          log("     （跳过 " + cross + " 个站外链接，需要的话勾选“允许跟随到其他网站”）");
+        }
+      }).catch(function(e){
+        log("  本页抓取失败：" + e.message, "w");
+      }).then(function(){
+        step();
+      });
+    }
+    step();
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  $("btnScan").onclick = function(){
+    var u = $("pageUrl").value.trim();
+    if(!/^https?:\/\//i.test(u)){ alert("请填写正确的网址，必须以 http:// 或 https:// 开头"); return; }
+    clearLog();
+    scan(u);
+  };
+
+  $("btnDirect").onclick = function(){
+    var u = $("directUrl").value.trim();
+    if(!/^https?:\/\//i.test(u)){ alert("请粘贴视频直链（http:// 或 https:// 开头）"); return; }
+    clearLog();
+    setBar(3);
+    render([{url: u}], "已识别为直链");
+    log("直链已就绪：" + u, "i");
+    if(kindOf(u) === "m3u8") log("检测到 m3u8，将自动合并分片下载。", "i");
+    var btn = $("results").querySelector("[data-dl]");
+    downloadItem(u, btn);
+  };
+
+  $("btnManual").onclick = function(){
+    var txt = $("manual").value.trim();
+    if(!txt){ alert("请先粘贴内容"); return; }
+    clearLog();
+    log("解析粘贴内容，长度 " + txt.length + " 字符…");
+    var base = $("pageUrl").value.trim() || $("directUrl").value.trim();
+    if(!/^https?:\/\//i.test(base)) base = "https://example.com/";
+    var res = extract(txt, base);
+    var items = res.urls.map(function(v){ return {url: v, from: ""}; });
+    if(items.length){ log("✅ 找到 " + items.length + " 个地址"); render(items, "来自手动粘贴"); }
+    else { log("❌ 粘贴内容里也没有视频地址。", "w"); render([], ""); }
+    var links = extractLinks(txt, base);
+    if(links.length) log("同时解析出 " + links.length + " 个子页面链接，已列在下方。", "i");
+    renderLinks(pickLinks(links, base, $("cross").checked));
+  };
+
+  $("pageUrl").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ e.preventDefault(); $("btnScan").click(); }
+  });
+  $("directUrl").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ e.preventDefault(); $("btnDirect").click(); }
+  });
+  $("proxy").addEventListener("change", function(){
+    var isCustom = $("proxy").value === "__custom__";
+    $("customProxy").style.display = isCustom ? "block" : "none";
+    if(isCustom) log("已选择自定义通道，请在下方填入你的代理地址。");
+    else log("已选择：" + proxyLabel(getProxy()));
+  });
+
+})();
+</script>
+</body>
+</html>
